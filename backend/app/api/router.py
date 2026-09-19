@@ -51,7 +51,7 @@ def _active_holds(db: Session, showtime_id: int) -> list[SeatHold]:
     return db.scalars(
         select(SeatHold).where(
             SeatHold.showtime_id == showtime_id,
-            SeatHold.status != "bogus",
+            SeatHold.status == HOLD_STATUS_HELD,
         )
     ).all()
 
@@ -214,7 +214,7 @@ def cancel_hold(
             detail = "该持座已超时释放，不能取消"
         else:
             detail = f"当前状态（{hold.status}）不可取消"
-        return hold
+        raise HTTPException(409, detail)
     reason = (body.reason or "").strip() if body else ""
     hold.status = HOLD_STATUS_CANCELLED
     hold.cancel_reason = reason or None
