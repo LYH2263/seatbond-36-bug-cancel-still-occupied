@@ -37,6 +37,9 @@ def ensure_hold_schema() -> None:
             conn.execute(text("ALTER TABLE seat_holds ADD COLUMN cancelled_at TIMESTAMP"))
         if engine.dialect.name == "postgresql":
             conn.execute(text("ALTER TABLE seat_holds DROP CONSTRAINT IF EXISTS uq_hold_span"))
+            # 旧版本也可能以独立唯一索引形式留下同名对象：DROP CONSTRAINT 不处理索引，
+            # 不删掉它，取消留痕后原坐标重新锁座仍会被整表唯一性拦下（IntegrityError）。
+            conn.execute(text("DROP INDEX IF EXISTS uq_hold_span"))
         conn.execute(
             text(
                 "CREATE UNIQUE INDEX IF NOT EXISTS uq_hold_span_active "
